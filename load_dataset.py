@@ -8,7 +8,7 @@ from torch.utils.data import Dataset
 
 # Soan's code
 class ImageDataset(Dataset):
-    def __init__(self, root_dir, txt_files, img_size=(320, 320),
+    def __init__(self, txt_files, img_size=(320, 320),
                  transform=None, n_cutoff_imgs=None):
         """
         :param root_dir: root directory to the dataset folder, e.g ../02-Data/UOW-HSI/
@@ -19,7 +19,6 @@ class ImageDataset(Dataset):
         """
         super(ImageDataset, self).__init__()
         self.txt_files = txt_files
-        self.root_dir = root_dir
         self.img_size = img_size
         self.transform = transform
         if transform is not None:
@@ -53,8 +52,8 @@ class ImageDataset(Dataset):
                 + groundtruth: ground-truth segmentation image of size (H, W)                
         """
         # Set the ground truth and input files
-        img_file = os.path.join(self.root_dir + self.training_imgs[index][0])
-        gt_file = os.path.join(self.root_dir + self.training_imgs[index][1])
+        img_file = os.path.join(self.training_imgs[index][0])
+        gt_file = os.path.join(self.training_imgs[index][1])
 
         # Read the images
         img = Image.open(img_file)
