@@ -17,27 +17,27 @@ def train_one_epoch(model, criterion, optimizer, data_loader, device):
     model.train()
     for data in tqdm(data_loader):
         
-        model.to(device) 
-        
-        image , target = data['image'].to(device, dtype=torch.float), data['label'].to(device)
-        
-        output = model(image)
-        
-        loss = criterion(output, target)
-        
-        optimizer.zero_grad()
-        
-        loss.backward()
-        
-        optimizer.step()
-        
-        train_loss += loss.cpu().detach().numpy()    
-        
-        acc1, jacc = iou(output, target)
-        
-        top1.update(acc1, image.size(0))
-        avgloss.update(loss, image.size(0))
-        jacc1.update(jacc, image.size(0)) 
+      model.to(device) 
+      
+      image , target = data['image'].to(device, dtype=torch.float), data['label'].to(device)
+      
+      output = model(image)
+      
+      loss = criterion(output, target)
+      
+      optimizer.zero_grad()
+      
+      loss.backward()
+      
+      optimizer.step()
+      
+      train_loss += loss.cpu().detach().numpy()    
+      
+      acc1, jacc = iou(output, target)
+      
+      top1.update(acc1, image.size(0))
+      avgloss.update(loss, image.size(0))
+      jacc1.update(jacc, image.size(0)) 
             
     return avgloss.avg, top1.avg, jacc1.avg
 
