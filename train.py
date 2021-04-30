@@ -1,19 +1,16 @@
 import torch
-import torch.nn as nn
-import torchvision
-import os
-import torch.nn.functional as F
-from PIL import Image
-from utils.utils import iou, AverageMeter
+from utils.utils import iou, AverageMeter, pixel_accuracy, dice_coefficient
 from tqdm import tqdm
 
 
 def train_one_epoch(model, criterion, optimizer, data_loader, device):
     
-    top1 = AverageMeter('Acc@1', ':6.2f')
+    accuracy = AverageMeter('Acc@1', ':6.2f')
     avgloss = AverageMeter('Loss', '1.5f')
-    jacc1 = AverageMeter('Jacc_sim@1', ':6.2f')
-    train_loss = 0.0
+    avgIoU = AverageMeter('IoU@1', ':6.2f')
+    Dice_coeff = AverageMeter('Dice@1', '6.2f')
+    
+    
     model.train()
     for data in tqdm(data_loader):
         
@@ -31,23 +28,27 @@ def train_one_epoch(model, criterion, optimizer, data_loader, device):
       
       optimizer.step()
       
-      train_loss += loss.cpu().detach().numpy()    
       
-      acc1, jacc = iou(output, target)
+      miou = iou(output, target)
       
-      top1.update(acc1, image.size(0))
+      acc = pixel_accuracy(output, target)
+      
+      dice_coeff = dice_coefficient(output, target)
+      
+      accuracy.update(acc, image.size(0))
       avgloss.update(loss, image.size(0))
-      jacc1.update(jacc, image.size(0)) 
+      avgIoU.update(miou, image.size(0)) 
+      Dice_coeff.update(dice_coeff, image.size(0))
             
-    return avgloss.avg, top1.avg, jacc1.avg
+    return avgloss.avg, avgIoU.avg, accuracy.avg, Dice_coeff.avg
 
 
 def validate_model(model, criterion, valid_loader, device):
 
-  top1 = AverageMeter('Acc@1', ':6.2f')
-  jacc1 = AverageMeter('Jacc_sim@1', ':6.2f')
+  accuracy = AverageMeter('Acc@1', ':6.2f')
   avgloss = AverageMeter('Loss', '1.5f')
-  val_loss = 0.0
+  avgIoU = AverageMeter('Jacc_sim@1', ':6.2f')
+  Dice_coeff = AverageMeter('Dice@1', '6.2f')
 
   model.eval()
   with torch.no_grad():
@@ -56,14 +57,16 @@ def validate_model(model, criterion, valid_loader, device):
       output = model(image)
     
       loss = criterion(output, target)
-    
-    
-      val_loss += loss.cpu().detach().numpy()    
-    
-      acc1, jacc = iou(output, target)
+     
+      miou = iou(output, target)
       
-      top1.update(acc1, image.size(0))
-      avgloss.update(loss, image.size(0)) 
-      jacc1.update(jacc, image.size(0))                             
+      acc = pixel_accuracy(output, target)
+      
+      dice_coeff = dice_coefficient(output, target)
+      
+      accuracy.update(acc, image.size(0))
+      avgloss.update(loss, image.size(0))
+      avgIoU.update(miou, image.size(0)) 
+      Dice_coeff.update(dice_coeff, image.size(0))                           
               
-  return avgloss.avg , top1.avg, jacc1.avg
+  return avgloss.avg , accuracy.avg, avgIoU.avg, Dice_coeff.avg

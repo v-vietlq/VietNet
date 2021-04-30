@@ -1,8 +1,9 @@
+from numpy.core.numeric import outer
 from numpy.lib.function_base import average
 import torch
 import numpy as np
 
-from sklearn.metrics import jaccard_score as jsc
+from sklearn.metrics import jaccard_score as jsc, accuracy_score, f1_score
 
 
 
@@ -32,14 +33,14 @@ class AverageMeter(object):
 
 
 def get_score(output, target):
-    intersection = np.logical_and(target, output)
-    union = np.logical_or(target, output)
-    iou_score = np.sum(intersection)/ np.sum(union)
+    # intersection = np.logical_and(target, output)
+    # union = np.logical_or(target, output)
+    # iou_score = np.sum(intersection)/ np.sum(union)
     y_true = target.reshape(-1)
     y_pred = output.reshape(-1)
     jacc_sim = jsc(y_true, y_pred, average=None)
     mean_jacc_sim = np.mean(jacc_sim)
-    return iou_score, mean_jacc_sim
+    return mean_jacc_sim
 
 def iou(output, target):
     output = output
@@ -48,6 +49,27 @@ def iou(output, target):
     output = torch.argmax(output, 1)
     output = output.cpu().numpy()
     return get_score(output, target.cpu().numpy())
+
+
+def pixel_accuracy(output, target):
+    output = output.cpu().numpy()
+    target = target.cpu().numpy()
+    output.reshape(-1)
+    target.reshape(-1)
+    return np.mean(output==target)
+
+def dice_coefficient(output, target):
+    output = output.cpu().numpy()
+    target = target.cpu().numpy()
+    output = output.reshape(-1)
+    target = target.reshape(-1)
+    return f1_score(target, output)
+    
+
+    
+
+
+
 
 
     

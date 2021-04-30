@@ -1,8 +1,6 @@
-from types import new_class
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
-from torch.autograd import Variable
 import numpy as np
 import scipy.ndimage as nd
 
@@ -69,14 +67,16 @@ class OhemCrossEntropy2d(nn.Module):
         num_valid = valid_flag.sum()
         
         if num_valid > 0 :
-            prod = input_prob[:, valid_flag]
-            pred = prod[label, np.arange(len(label), dtype=np.int32)]
-            kept_lag = pred <=threshold
+            prob = input_prob[:,valid_flag]
+            pred = prob[label, np.arange(len(label), dtype=np.int32)]
+            kept_flag = pred <= threshold
+            valid_inds = valid_inds[kept_flag]
+            print('Labels: {} {}'.format(len(valid_inds), threshold))
+        
         
         label = input_label[valid_inds].copy()
-        
         input_label.fill(self.ignore_label)
-        input_label.fill[valid_inds] = label
+        input_label[valid_inds] = label
         
         new_target = torch.from_numpy(input_label.reshape(target.size())).long().cuda(target.get_device())
         
@@ -88,6 +88,15 @@ class OhemCrossEntropy2d(nn.Module):
         target = self.generate_new_target(input_prob, target)
         
         return self.criterion(predict, target)
+
+class CrossEntropyLoss2d(nn.Module):
+    def __init__(self, weight=None) -> None:
+        super().__init__()
+        self.loss = nn.NLLLoss(weight)
+        
+    def forward(self, outputs, targets):
+        outputs = outputs
+        return self.loss(F.log_softmax(outputs, dim=1), targets)
             
         
         
